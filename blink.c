@@ -29,34 +29,35 @@ const short a3_off[100] = {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
   0,0,1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,1,0,0,0,1,0,0,0};
 
 void send(const short bits[]) {
-  int t;
+  int t, ix;
   for (t = 0; t < 5; t++) {
-    int ix;
     for (ix = 0; ix < 100; ix++) {
-      if (bits[ix] == 0) {
-        PORTB = 0x00;
-      } else {
-        PORTB = 0x01;
-      }
+      if (bits[ix])
+        PORTB = 0x03;
+      else
+        PORTB = 0x02;
       _delay_us(320);
     }
+    _delay_ms(6);
   }
-  _delay_ms(1);
+  _delay_ms(20);
 }
 
 void allOn() {
-  //send(a1_on);
-  //send(a2_on);
-  //send(a3_on);
-  //_delay_ms(100);
-  PORTB = 0x20;
+  PORTB = 0x02;
+  _delay_ms(200);
+  send(a1_on);
+  send(a2_on);
+  send(a3_on);
+  PORTB = 0x00;
 }
 
 void allOff() {
-  // send(a1_off);
-  // send(a2_off);
-  // send(a3_off);
-  // _delay_ms(100);
+  PORTB = 0x02;
+  _delay_ms(200);
+  send(a1_off);
+  send(a2_off);
+  send(a3_off);
   PORTB = 0x00;
 }
 
@@ -84,6 +85,7 @@ int main(void) {
   while(1)
   {
     gotoSleep();
+    _delay_ms(10);
     newButtonState = PIND & 0x04;
     if (buttonState != newButtonState) {
       onOff = ~onOff;

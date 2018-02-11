@@ -1,0 +1,4 @@
+avr-gcc -Wall -O2 -DF_CPU=16000000UL -mmcu=atmega328p -o blink blink.c
+avr-objcopy -O ihex -R .eeprom blink blink.hex
+avrdude -F -V -c arduino -p ATMEGA328P -P COM3 -b57600 -U flash2:blink.hex
+
