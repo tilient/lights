@@ -30,22 +30,19 @@ const short a3_off[100] = {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
 
 void send(const short bits[]) {
   int t, ix;
-  for (t = 0; t < 5; t++) {
+  for (t = 0; t < 4; t++) {
     for (ix = 0; ix < 100; ix++) {
-      if (bits[ix])
-        PORTB = 0x03;
-      else
-        PORTB = 0x02;
+      PORTB = (bits[ix]) ? 0x03 : 0x02;
       _delay_us(320);
     }
     _delay_ms(6);
   }
-  _delay_ms(20);
+  _delay_ms(6);
 }
 
 void allOn() {
   PORTB = 0x02;
-  _delay_ms(200);
+  _delay_ms(100);
   send(a1_on);
   send(a2_on);
   send(a3_on);
@@ -54,7 +51,7 @@ void allOn() {
 
 void allOff() {
   PORTB = 0x02;
-  _delay_ms(200);
+  _delay_ms(100);
   send(a1_off);
   send(a2_off);
   send(a3_off);
