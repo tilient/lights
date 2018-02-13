@@ -20,7 +20,8 @@ static void setup(void)
 	rcc_periph_clock_enable(RCC_GPIOA);
 	gpio_set_mode(
     GPIOA, GPIO_MODE_INPUT,
-		GPIO_CNF_INPUT_FLOAT, GPIO0);
+		GPIO_CNF_INPUT_PULL_UPDOWN, GPIO0);
+  gpio_clear(GPIOA, GPIO0);
 
   // enable cycle counter
   dwt_enable_cycle_counter();
@@ -52,23 +53,28 @@ uint8_t t = 1;
 
 void exti0_isr() {
   exti_reset_request(EXTI0);
-  if (t)
-    t = 0;
-  else
-    t = 1;
+  t = t ? 0 : 1;
+  gpio_clear(GPIOA, GPIO0);
 }
 
 // ---------------------------------------------------
 
 int main(void)
 {
+  int i;
+
 	setup();
 	while (1) {
-	  gpio_toggle(GPIOC, GPIO13);
-    if (t)
+    for (i = 0; i < 5; i++) {
+  	  gpio_clear(GPIOC, GPIO13);
       delay_ms(100);
-    else
-      delay_ms(500);
+  	  gpio_set(GPIOC, GPIO13);
+      if (t)
+        delay_ms(1000);
+      else
+        delay_ms(100);
+    }
+    __WFI();
 	}
 	return 0;
 }
