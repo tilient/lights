@@ -7,7 +7,12 @@
 
 #define TX_DATA_GPIO 22
 #define TX_PWR_GPIO  23
+
 #define BUTTON_A_GPIO 0
+#define BUTTON_B_GPIO 2
+#define BUTTON_A_BIT 0b0001
+#define BUTTON_B_BIT 0b0100
+#define BUTTON_BITS  0b0101
 
 const short a1_on[100]  = {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
   1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,
@@ -72,20 +77,28 @@ void allLightsOff() {
 }
 
 void app_main() {
-  // setup transmit power pin
-  gpio_pad_select_gpio(TX_PWR_GPIO);
-  gpio_set_direction(TX_PWR_GPIO, GPIO_MODE_OUTPUT);
-  // setup transmit data pin
-  gpio_pad_select_gpio(TX_DATA_GPIO);
-  gpio_set_direction(TX_DATA_GPIO, GPIO_MODE_OUTPUT);
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1)
+  {
+    gpio_pad_select_gpio(TX_PWR_GPIO);
+    gpio_set_direction(TX_PWR_GPIO, GPIO_MODE_OUTPUT);
+    gpio_pad_select_gpio(TX_DATA_GPIO);
+    gpio_set_direction(TX_DATA_GPIO, GPIO_MODE_OUTPUT);
 
-  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0)
-    allLightsOn();
+    uint64_t map = esp_sleep_get_ext1_wakeup_status();
+    if (map == BUTTON_B_BIT)
+      allLightsOff();
+    if (map == BUTTON_A_BIT)
+      allLightsOn();
+  }
 
-  // setup interrupt pin
-  gpio_pullup_en(BUTTON_A_GPIO);
-  gpio_pulldown_dis(BUTTON_A_GPIO);
-  esp_sleep_enable_ext0_wakeup(BUTTON_A_GPIO, 0);
+  gpio_pullup_dis(BUTTON_A_GPIO);
+  gpio_pulldown_en(BUTTON_A_GPIO);
+  gpio_pullup_dis(BUTTON_B_GPIO);
+  gpio_pulldown_en(BUTTON_B_GPIO);
+  esp_sleep_enable_ext1_wakeup(
+    BUTTON_BITS, ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_pd_config(
+    ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
 
   esp_deep_sleep_start();
 }
