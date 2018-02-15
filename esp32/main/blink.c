@@ -6,7 +6,7 @@
 #include "sdkconfig.h"
 
 #define TX_DATA_GPIO 22
-#define TX_PWR_GPIO 23
+#define TX_PWR_GPIO  23
 #define BUTTON_A_GPIO 0
 
 const short a1_on[100]  = {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
@@ -34,7 +34,7 @@ const short a3_off[100] = {1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
   1,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,
   0,0,1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,1,0,0,0,1,0,0,0};
 
-void send(const short bits[]) {
+void transmit(const short bits[]) {
   int t, ix;
   for (t = 0; t < 3; t++) {
     for (ix = 0; ix < 100; ix++) {
@@ -46,37 +46,43 @@ void send(const short bits[]) {
   ets_delay_us(6000);
 }
 
-void allOn() {
+void turnOnTxPower() {
   gpio_set_level(TX_PWR_GPIO, 1);
   ets_delay_us(100000);
-  send(a1_on);
-  send(a2_on);
-  send(a3_on);
+}
+
+void turnOffTxPower() {
   gpio_set_level(TX_PWR_GPIO, 0);
 }
 
-void allOff() {
-  gpio_set_level(TX_PWR_GPIO, 1);
-  ets_delay_us(100000);
-  send(a1_off);
-  send(a2_off);
-  send(a3_off);
-  gpio_set_level(TX_PWR_GPIO, 0);
+void allLightsOn() {
+  turnOnTxPower();
+  transmit(a1_on);
+  transmit(a2_on);
+  transmit(a3_on);
+  turnOffTxPower();
 }
 
+void allLightsOff() {
+  turnOnTxPower();
+  transmit(a1_off);
+  transmit(a2_off);
+  transmit(a3_off);
+  turnOffTxPower();
+}
 
 void app_main() {
+  // setup transmit power pin
+  gpio_pad_select_gpio(TX_PWR_GPIO);
+  gpio_set_direction(TX_PWR_GPIO, GPIO_MODE_OUTPUT);
+  // setup transmit data pin
   gpio_pad_select_gpio(TX_DATA_GPIO);
   gpio_set_direction(TX_DATA_GPIO, GPIO_MODE_OUTPUT);
 
-  gpio_pad_select_gpio(TX_PWR_GPIO);
-  gpio_set_direction(TX_PWR_GPIO, GPIO_MODE_OUTPUT);
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0)
+    allLightsOn();
 
-  //vTaskDelay(10000 / portTICK_PERIOD_MS);
-  allOn();
-
-  //esp_sleep_enable_timer_wakeup(725000);
-
+  // setup interrupt pin
   gpio_pullup_en(BUTTON_A_GPIO);
   gpio_pulldown_dis(BUTTON_A_GPIO);
   esp_sleep_enable_ext0_wakeup(BUTTON_A_GPIO, 0);
